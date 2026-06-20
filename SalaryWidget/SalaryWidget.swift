@@ -1,42 +1,21 @@
 import SwiftUI
+import SwiftData
 import WidgetKit
 
 private extension SalarySettings {
-    static func loadFromCloud() -> SalarySettings {
-        let store = NSUbiquitousKeyValueStore.default
-        store.synchronize()
+    static let widgetModelContainer = try? SalaryDataStore.makeContainer()
 
-        return SalarySettings(
-            monthlySalary: value(
-                in: store,
-                forKey: SettingsKey.monthlySalary,
-                fallback: 0
-            ),
-            salaryType: SalaryType(
-                rawValue: store.string(forKey: SettingsKey.salaryType) ?? ""
-            ) ?? .beforeTax,
-            workStartMinutes: value(
-                in: store,
-                forKey: SettingsKey.workStartMinutes,
-                fallback: defaultWorkStartMinutes
-            ),
-            workEndMinutes: value(
-                in: store,
-                forKey: SettingsKey.workEndMinutes,
-                fallback: defaultWorkEndMinutes
-            )
-        )
-    }
-
-    private static func value(
-        in store: NSUbiquitousKeyValueStore,
-        forKey key: String,
-        fallback: Int
-    ) -> Int {
-        guard let value = store.object(forKey: key) as? NSNumber else {
-            return fallback
+    static func loadFromSwiftData() -> SalarySettings {
+        guard let widgetModelContainer else {
+            return .empty
         }
-        return value.intValue
+
+        do {
+            let context = ModelContext(widgetModelContainer)
+            return try SalaryDataStore.latestSettings(in: context)?.value ?? .empty
+        } catch {
+            return .empty
+        }
     }
 }
 
@@ -58,7 +37,6 @@ private struct SalaryProvider: TimelineProvider {
                 ) ?? .now,
                 settings: SalarySettings(
                     monthlySalary: 20_000,
-                    salaryType: .beforeTax,
                     workStartMinutes: 9 * 60,
                     workEndMinutes: 18 * 60
                 )
@@ -73,7 +51,7 @@ private struct SalaryProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<SalaryEntry>) -> Void) {
         let now = Date()
         let calendar = ChinaWorkdayCalendar.calendar
-        let settings = SalarySettings.loadFromCloud()
+        let settings = SalarySettings.loadFromSwiftData()
         let currentMinute = calendar.date(
             bySetting: .second,
             value: 0,
@@ -132,7 +110,7 @@ private struct SalaryProvider: TimelineProvider {
     }
 
     private func entry(at date: Date) -> SalaryEntry {
-        let settings = SalarySettings.loadFromCloud()
+        let settings = SalarySettings.loadFromSwiftData()
         return SalaryEntry(
             date: date,
             snapshot: SalaryCalculator.snapshot(at: date, settings: settings)
@@ -231,7 +209,7 @@ private struct SalaryWidgetView: View {
                 .padding(.trailing, 2)
 
             VStack(alignment: .leading, spacing: 0) {
-                Label("休息日", systemImage: "leaf.fill")
+                Label(restDayName, systemImage: "leaf.fill")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(restAccent)
 
@@ -274,7 +252,7 @@ private struct SalaryWidgetView: View {
             )
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("休息日。好好休息，今天不计算收入。")
+        .accessibilityLabel("\(restDayName)。好好休息，今天不计算收入。")
     }
 
     private var emptyState: some View {
@@ -297,6 +275,10 @@ private struct SalaryWidgetView: View {
             return "休息"
         }
         return entry.snapshot.progress >= 1 ? "今日工作已结束" : "等待上班"
+    }
+
+    private var restDayName: String {
+        ChinaWorkdayCalendar.restDayName(for: entry.date) ?? "休息日"
     }
 
     private var headerText: String {

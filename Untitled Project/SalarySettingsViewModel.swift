@@ -5,7 +5,6 @@ import Observation
 @MainActor
 final class SalarySettingsViewModel {
     var salaryText = ""
-    var salaryType: SalaryType = .beforeTax
     var workStartMinutes = SalarySettings.defaultWorkStartMinutes
     var workEndMinutes = SalarySettings.defaultWorkEndMinutes
     var showSavedMessage = false
@@ -15,10 +14,9 @@ final class SalarySettingsViewModel {
 
     private let repository: SettingsRepository
     private var toastTask: Task<Void, Never>?
-    private var lastPersistedSettings = SalarySettings.empty
 
-    init(repository: SettingsRepository? = nil) {
-        self.repository = repository ?? DefaultSettingsRepository()
+    init(repository: SettingsRepository) {
+        self.repository = repository
     }
 
     var salary: Int {
@@ -41,22 +39,11 @@ final class SalarySettingsViewModel {
         apply(repository.load())
     }
 
-    func applyCloudChanges() {
-        guard let settings = repository.applyCloudChanges() else { return }
-        savedSettings = settings
-        guard currentSettings == lastPersistedSettings else {
-            lastPersistedSettings = settings
-            return
-        }
-        apply(settings)
-    }
-
     func save() {
         let settings = currentSettings
         guard settings.isValid else { return }
 
         repository.save(settings)
-        lastPersistedSettings = settings
         savedSettings = settings
         hasSavedSettings = true
         showSavedToast()
@@ -65,7 +52,6 @@ final class SalarySettingsViewModel {
     private var currentSettings: SalarySettings {
         SalarySettings(
             monthlySalary: salary,
-            salaryType: salaryType,
             workStartMinutes: workStartMinutes,
             workEndMinutes: workEndMinutes
         )
@@ -73,12 +59,10 @@ final class SalarySettingsViewModel {
 
     private func apply(_ settings: SalarySettings) {
         salaryText = settings.monthlySalary > 0 ? String(settings.monthlySalary) : ""
-        salaryType = settings.salaryType
         workStartMinutes = settings.workStartMinutes
         workEndMinutes = settings.workEndMinutes
         savedSettings = settings
         hasSavedSettings = settings.monthlySalary > 0
-        lastPersistedSettings = settings
     }
 
     private func showSavedToast() {

@@ -95,7 +95,7 @@ struct HomeView: View {
 
                 Spacer()
 
-                Text(settings.salaryType.title)
+                Text("税前收入")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 10)
@@ -258,11 +258,10 @@ struct HomeView: View {
 }
 
 #Preview {
-    HomeView(
-        settings: SalarySettings(
-            monthlySalary: 20_000,
-            salaryType: .beforeTax,
-            workStartMinutes: 9 * 60,
+        HomeView(
+            settings: SalarySettings(
+                monthlySalary: 20_000,
+                workStartMinutes: 9 * 60,
             workEndMinutes: 18 * 60
         ),
         openSettings: {}

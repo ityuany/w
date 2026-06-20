@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import SwiftUI
 #if os(iOS)
 import UIKit
@@ -6,16 +7,36 @@ import UIKit
 
 @main
 struct MyApp: App {
+    private let modelContainer: ModelContainer
+
+    init() {
+        do {
+            modelContainer = try SalaryDataStore.makeContainer()
+        } catch {
+            fatalError("Unable to create SwiftData container: \(error)")
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(modelContainer: modelContainer)
         }
+        .modelContainer(modelContainer)
     }
 }
 
 struct ContentView: View {
-    @State private var viewModel = SalarySettingsViewModel()
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var viewModel: SalarySettingsViewModel
     @State private var selectedTab: AppTab = .home
+
+    init(modelContainer: ModelContainer) {
+        _viewModel = State(
+            initialValue: SalarySettingsViewModel(
+                repository: SwiftDataSettingsRepository(modelContainer: modelContainer)
+            )
+        )
+    }
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -37,12 +58,10 @@ struct ContentView: View {
         .task {
             viewModel.load()
         }
-        .onReceive(
-            NotificationCenter.default.publisher(
-                for: NSUbiquitousKeyValueStore.didChangeExternallyNotification
-            )
-        ) { _ in
-            viewModel.applyCloudChanges()
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                viewModel.load()
+            }
         }
     }
 }
@@ -138,7 +157,7 @@ struct SettingsView: View {
 
     private var salaryCard: some View {
         VStack(alignment: .leading, spacing: 24) {
-            Text("我的月薪")
+            Text("税前月薪")
                 .font(.system(size: 17, weight: .semibold))
 
             HStack(alignment: .firstTextBaseline, spacing: 9) {
@@ -153,26 +172,6 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 8) {
-                ForEach(SalaryType.allCases) { type in
-                    Button {
-                        viewModel.salaryType = type
-                    } label: {
-                        Text(type.title)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(
-                                viewModel.salaryType == type ? Color.appOnInk : Color.primary
-                            )
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(
-                                viewModel.salaryType == type ? Color.appInk : Color.appControl,
-                                in: RoundedRectangle(cornerRadius: 13, style: .continuous)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
         }
         .padding(22)
         .background(Color.appCard, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
@@ -399,5 +398,7 @@ extension Color {
 }
 
 #Preview {
-    ContentView()
+    let container = try! SalaryDataStore.makeContainer(inMemory: true)
+    ContentView(modelContainer: container)
+        .modelContainer(container)
 }
