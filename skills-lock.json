@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "apple-hig": {
+      "source": "nexu-io/open-design",
+      "sourceType": "github",
+      "skillPath": "skills/apple-hig/SKILL.md",
+      "computedHash": "810dd0ff8da113fceee96b5d4228b0d298d29d14ee90b9977fae1bc76d1358e8"
+    },
+    "ios-development": {
+      "source": "rshankras/claude-code-apple-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ios/SKILL.md",
+      "computedHash": "76caa86731626560f2607020c37cc68012b4c95fc8d7e5ec81f208d325cddecd"
+    },
+    "ios-icon-gen": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "skillPath": "skills/ios-icon-gen/SKILL.md",
+      "computedHash": "6201a419bdf725a1e0381378911e270f1fa9a0bcdf3ee80ff56a2ab3230c4adb"
+    },
+    "mobile-ios-design": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/ui-design/skills/mobile-ios-design/SKILL.md",
+      "computedHash": "3902f919488d8ddc983e157bbcd5f16b739b84eeaab57002bf52b7f9601ed6ad"
+    },
+    "swift-concurrency": {
+      "source": "avdlee/swift-concurrency-agent-skill",
+      "sourceType": "github",
+      "skillPath": "swift-concurrency/SKILL.md",
+      "computedHash": "5e1f6433159038c49135028eeeea3a7b9a0a6001c8a4cc8227e391caf35cd985"
+    },
+    "swiftui-patterns": {
+      "source": "johnrogers/claude-swift-engineering",
+      "sourceType": "github",
+      "skillPath": "plugins/swift-engineering/skills/swiftui-patterns/SKILL.md",
+      "computedHash": "e376181e92369f2daaed086f19787b2c4bf6f8051b4f71ec57582e2b21f7c522"
+    }
+  }
+}
